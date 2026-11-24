@@ -21,7 +21,7 @@ drifts quickly. This module builds it from one set of inputs.
 
 | Piece | Name | Details |
 |---|---|---|
-| Management group | `<prefix>-<env>` | Optional (`create_management_groups = true`). Moves the subscription into it |
+| Management group | `<prefix>-<env>` | Optional (`create_management_groups = true`). Moves the subscription into it (that move is untested) |
 | Subscription | — | Existing one, passed in (not created) |
 | Resource group | `<prefix>-<env>-rg` | Every resource gets `environment=<env>` and `managed-by=terraform` |
 | VNet | `<prefix>-<env>-vnet` | One `/16` per environment |
@@ -44,7 +44,8 @@ NSG rules:
   vending is a separate process).
 - **Policies are assigned to the resource group, not the subscription,** so the module is safe to
   run in a shared subscription without affecting other teams.
-- **Management groups are off by default** because they need tenant-level permissions.
+- **Management groups are off by default:** moving a subscription changes the policies it inherits,
+  so it should be a deliberate choice.
 - **Built-in policy definitions** are looked up by display name, so no definition IDs are hardcoded.
 - **One Terraform workspace per environment.** All three tfvars files use the same code but
   different state, so applying prod never touches dev.
@@ -140,7 +141,9 @@ Framework abbreviations (`rg`, `vnet`, `snet`, `nsg`).
 - The policies use their built-in default effect, `Deny`: a non-compliant resource is never created.
 - The module's own resources always carry the required tag, so it passes its own policy.
 - Least privilege to run it: Contributor + Resource Policy Contributor on the subscription
-  (Owner also works). Management groups need Management Group Contributor at the tenant root.
+  (Owner also works). Creating a management group works for any tenant user unless the tenant's
+  hierarchy settings restrict it. Moving a subscription into it also needs write access on the
+  subscription's current parent management group.
 
 ## Idempotency and safe changes
 
@@ -183,10 +186,28 @@ runs, even if a check fails. Takes about 6 minutes.
 
 Last run: 15 passed, 0 failed.
 
+### Management group test (manual)
+
+Run once against the real tenant, targeting only the management group so the subscription is not moved:
+
+```bash
+terraform workspace select -or-create mgtest
+terraform apply -var-file=envs/dev.tfvars -var=prefix=azlzmg \
+  -var=create_management_groups=true -var=subscription_id=$ARM_SUBSCRIPTION_ID \
+  -target=module.landing_zone.azurerm_management_group.this
+# check: az account management-group show --name azlzmg-dev
+terraform destroy <same variables and -target>
+```
+
+Result: management group `azlzmg-dev` created under the Tenant Root Group, a second plan had no
+changes, and destroy removed it. This works because Azure lets any tenant user create management
+groups under the root unless the tenant's hierarchy settings require write permission.
+
 ## Known limits
 
-- **Management groups are untested.** The code is there, but the test account has no
-  tenant-level permissions.
+- **Moving the subscription into the management group is untested.** Creating and destroying the
+  management group was tested (see Testing and CI). The subscription association was left out on purpose:
+  the test subscription is shared, and moving it would change the policies inherited by every team in it.
 - **stage and prod were only planned**, not applied. They use the same code as dev with
   different values.
 - Subscriptions are not created (needs a billing account).
