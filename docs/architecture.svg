@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13">
+  <rect width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="28" text-anchor="middle" font-size="17" font-weight="600" fill="#1b1b1b">Azure landing zone — one environment (dev / stage / prod)</text>
+
+  <!-- Management group (optional) -->
+  <rect x="20" y="45" width="720" height="410" rx="10" fill="none" stroke="#8a8886" stroke-dasharray="6 4"/>
+  <text x="32" y="64" fill="#605e5c">Management group &lt;prefix&gt;-&lt;env&gt;  (optional: create_management_groups = true, not tested)</text>
+
+  <!-- Subscription -->
+  <rect x="40" y="76" width="680" height="364" rx="8" fill="#f3f9fd" stroke="#0078d4"/>
+  <text x="52" y="96" fill="#0078d4" font-weight="600">Existing subscription (passed in, not created)</text>
+
+  <!-- Resource group -->
+  <rect x="60" y="108" width="640" height="316" rx="8" fill="#ffffff" stroke="#5c2d91"/>
+  <text x="72" y="128" fill="#5c2d91" font-weight="600">Resource group  &lt;prefix&gt;-&lt;env&gt;-rg   ·   tags: environment, managed-by</text>
+
+  <!-- Policies -->
+  <rect x="470" y="142" width="214" height="98" rx="6" fill="#fff4ce" stroke="#c19c00"/>
+  <text x="482" y="162" font-weight="600" fill="#1b1b1b">Azure Policy (RG scope)</text>
+  <text x="482" y="184" fill="#1b1b1b">• Allowed locations</text>
+  <text x="482" y="204" fill="#1b1b1b">• Require a tag on resources</text>
+  <text x="482" y="226" fill="#605e5c" font-size="12">deny → RequestDisallowedByPolicy</text>
+
+  <!-- VNet -->
+  <rect x="80" y="142" width="370" height="266" rx="6" fill="#e8f5e9" stroke="#107c10"/>
+  <text x="92" y="162" font-weight="600" fill="#107c10">VNet &lt;prefix&gt;-&lt;env&gt;-vnet   10.X.0.0/16</text>
+
+  <rect x="98" y="176" width="334" height="96" rx="6" fill="#ffffff" stroke="#107c10"/>
+  <text x="110" y="196" font-weight="600" fill="#1b1b1b">app subnet  10.X.1.0/24</text>
+  <text x="110" y="218" fill="#1b1b1b">NSG app-nsg</text>
+  <text x="110" y="238" fill="#1b1b1b">  100 Allow  Internet → 443/tcp</text>
+  <text x="110" y="258" fill="#605e5c" font-size="12">  + Azure default rules</text>
+
+  <rect x="98" y="294" width="334" height="100" rx="6" fill="#ffffff" stroke="#107c10"/>
+  <text x="110" y="314" font-weight="600" fill="#1b1b1b">data subnet  10.X.2.0/24</text>
+  <text x="110" y="336" fill="#1b1b1b">NSG data-nsg</text>
+  <text x="110" y="356" fill="#1b1b1b">  100  Allow  app subnet → any</text>
+  <text x="110" y="376" fill="#1b1b1b">  4000 Deny   VirtualNetwork → any</text>
+
+  <!-- arrows -->
+  <line x1="265" y1="272" x2="265" y2="292" stroke="#107c10" stroke-width="2" marker-end="url(#a)"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#107c10"/></marker></defs>
+
+  <!-- env table -->
+  <rect x="470" y="258" width="214" height="110" rx="6" fill="#f3f2f1" stroke="#8a8886"/>
+  <text x="482" y="278" font-weight="600" fill="#1b1b1b">X per environment</text>
+  <text x="482" y="300" fill="#1b1b1b">dev    10.10.0.0/16</text>
+  <text x="482" y="320" fill="#1b1b1b">stage  10.20.0.0/16</text>
+  <text x="482" y="340" fill="#1b1b1b">prod   10.30.0.0/16</text>
+  <text x="482" y="360" fill="#605e5c" font-size="12">one workspace (state) each</text>
+</svg>
