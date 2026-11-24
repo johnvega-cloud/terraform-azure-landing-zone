@@ -50,6 +50,13 @@ Each environment gets its own Terraform workspace, so its own state.
 `tests/plan.tftest.hcl` mocks the azurerm provider. Two runs check names and subnet ranges, and two
 call the module directly to check that its validations reject bad input.
 
+## 10. End-to-end test
+
+`e2e/azure/run.sh` applies the dev values in a real subscription under its own prefix and
+workspace, checks every piece with `az`, runs a second plan (must be empty), tries three NSGs
+against the policies (two must be denied, one accepted) and always destroys at the end.
+It comes last because it needs everything above to exist.
+
 ## Provisioning order in Azure
 
 Terraform works out the order from references:
